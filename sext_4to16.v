@@ -6,6 +6,23 @@ output [15:0] out;
 assign out = {{12{imm[3]}}, imm};
 endmodule
 
+//This module sign extends a 9 bit immediate
+module sext_9to16(imm, out);
+input [8:0] imm;
+output [15:0] out;
+
+assign out = {{7{imm[8]}}, imm};
+//assign out = {7'b000000, imm};
+endmodule
+
+//This module sign extends a 12 bit immediate
+module sext_12to16(imm, out);
+input [11:0] imm;
+output [15:0] out;
+
+assign out = {{4{imm[11]}}, imm};
+endmodule
+
 module t_sext_4to16();
 reg [3:0] imm;
 wire [15:0] out;
