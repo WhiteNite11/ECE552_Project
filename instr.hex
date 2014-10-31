@@ -1,9 +1,12 @@
 @0000 B222	// LLB R2, 0x22
 @0001 B111	// LLB R1, 0x11
-@0002 9100  // SW  R1, 0(R0)
-@0003 8e00  // LW  Re, 0(R0)
-@0004 0a21	// ADD Ra, R2, R1
-@0005 3b21	// AND Rb, R2, R1
-@0006 2c21	// SUB Rc, R2, R1
-@0007 5d21	// SLL Rd, R2, 1
-@0008 F000	// HLT
+@0002 B3ff      // LLB R3, 0xff
+@0003 B3ff      // LLB R3, 0xff
+@0004 B3ff      // LLB R3, 0xff
+@0005 0a21	// ADD Ra, R2, R1
+@0006 3b21	// AND Rb, R2, R1
+@0007 2c21	// SUB Rc, R2, R1
+@0008 5d21	// SLL Rd, R2, 1
+@0009 9100  // SW  R1, 0(R0)
+@000a 8e00  // LW  Re, 0(R0)
+@000b F000	// HLT
