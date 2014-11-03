@@ -12,7 +12,7 @@ output reg [2:0] flag_out;	//output Flag
 /////////////////////////////////////
 // Flag is updated on falling edge //
 ///////////////////////////////////
-always @(negedge clk, negedge rst_n)
+always @(posedge clk)
   if (~rst_n)
     flag_out <= 3'b000;
   else if (flag_wr_en)

@@ -1,8 +1,6 @@
-module controller(rst_n, opcode, cond, flag, pc_wr_en, im_rd_en, rf_re1, rf_re2, rf_we, rf_hlt,
+module controller(rst_n, opcode, pc_wr_en, im_rd_en, rf_re1, rf_re2, rf_we, rf_hlt,
                   op_lxb, op_sw, alu_alt_src, dm_rd_en, dm_wr_en, mem_to_reg, op_jal, op_jr, take_branch);
 input [3:0] opcode;
-input [2:0] cond;
-input [2:0] flag;
 input rst_n;
 //PC signals
 output  reg pc_wr_en;
@@ -43,17 +41,8 @@ localparam JAL    = 4'hd;
 localparam JR     = 4'he;
 localparam HLT    = 4'hf;
 
-localparam NE    = 3'b000;
-localparam EQ    = 3'b001;
-localparam GT    = 3'b010;
-localparam LT    = 3'b011;
-localparam GTE   = 3'b100;
-localparam LTE   = 3'b101;
-localparam OVF   = 3'b110;
-localparam UNCOND = 3'b111;
-
 //Case statement on every opcode
-always @(opcode, rst_n, cond, flag) begin
+always @(opcode, rst_n) begin
     im_rd_en = 1'b1;
     pc_wr_en = 1'b1;
     op_lxb = 1'b0; 
@@ -289,7 +278,100 @@ always @(opcode, rst_n, cond, flag) begin
     mem_to_reg  = 1'b0;
     op_jal      = 1'b0; 
     op_jr       = 1'b0; 
-    case(cond) // flag[2]=n, flag[1]=z, flag[0]=v, 
+    take_branch = 1'b1;
+    end
+    JAL: begin
+    im_rd_en = 1'b1;
+    pc_wr_en = 1'b1;
+    op_lxb = 1'b0; 
+    op_sw  = 1'b0;
+    rf_re1 = 1'b0;
+    rf_re2 = 1'b0;
+    rf_we  = 1'b1;
+    rf_hlt = 1'b0; 
+    alu_alt_src = 1'b0;
+    dm_rd_en    = 1'b0;
+    dm_wr_en    = 1'b0;
+    mem_to_reg  = 1'b0;
+    op_jal      = 1'b1; 
+    op_jr       = 1'b0; 
+    take_branch = 1'b1;
+    end
+    JR: begin
+    im_rd_en = 1'b1;
+    pc_wr_en = 1'b1;
+    op_lxb = 1'b0; 
+    op_sw  = 1'b0;
+    rf_re1 = 1'b1;
+    rf_re2 = 1'b0;
+    rf_we  = 1'b0;
+    rf_hlt = 1'b0; 
+    alu_alt_src = 1'b0;
+    dm_rd_en    = 1'b0;
+    dm_wr_en    = 1'b0;
+    mem_to_reg  = 1'b0;
+    op_jal      = 1'b0; 
+    op_jr       = 1'b1; 
+    take_branch = 1'b1;
+    end
+    HLT: begin
+    im_rd_en = 1'b0;
+    pc_wr_en = 1'b0;
+    op_lxb = 1'b0; 
+    op_sw  = 1'b0;
+    rf_re1 = 1'b0;
+    rf_re2 = 1'b0;
+    rf_we  = 1'b0;
+    rf_hlt = 1'b1; 
+    alu_alt_src = 1'b0;
+    dm_rd_en    = 1'b0;
+    dm_wr_en    = 1'b0;
+    mem_to_reg  = 1'b0;
+    op_jal      = 1'b0; 
+    op_jr       = 1'b0; 
+    take_branch = 1'b0;
+    end
+    default: begin
+    im_rd_en = 1'b1;
+    pc_wr_en = 1'b1;
+    op_lxb = 1'b0; 
+    op_sw  = 1'b0;
+    rf_re1 = 1'b0;
+    rf_re2 = 1'b0;
+    rf_we  = 1'b0;
+    rf_hlt = 1'b0; 
+    alu_alt_src = 1'b0;
+    dm_rd_en    = 1'b0;
+    dm_wr_en    = 1'b0;
+    mem_to_reg  = 1'b0;
+    op_jal      = 1'b0; 
+    op_jr       = 1'b0; 
+    take_branch = 1'b0;
+    end
+  endcase
+end
+endmodule
+
+//Branch controller
+module branch_cntrl(flag, cond, take_branch_IN, take_branch_OUT);
+input [2:0] cond, flag;
+input take_branch_IN;
+
+reg take_branch; 
+output take_branch_OUT;
+
+assign take_branch_OUT = take_branch & take_branch_IN; 
+localparam NE    = 3'b000;
+localparam EQ    = 3'b001;
+localparam GT    = 3'b010;
+localparam LT    = 3'b011;
+localparam GTE   = 3'b100;
+localparam LTE   = 3'b101;
+localparam OVF   = 3'b110;
+localparam UNCOND = 3'b111;
+
+always @(cond, flag, take_branch_IN) begin
+case(cond) // flag[2]=n, flag[1]=z, flag[0]=v, 
       NE: 
       begin //not equal z=0
         if (flag[1] == 1'b0) begin
@@ -362,75 +444,6 @@ always @(opcode, rst_n, cond, flag) begin
         take_branch = 1'b0;
       end
     endcase 
-    end
-    JAL: begin
-    im_rd_en = 1'b1;
-    pc_wr_en = 1'b1;
-    op_lxb = 1'b0; 
-    op_sw  = 1'b0;
-    rf_re1 = 1'b0;
-    rf_re2 = 1'b0;
-    rf_we  = 1'b1;
-    rf_hlt = 1'b0; 
-    alu_alt_src = 1'b0;
-    dm_rd_en    = 1'b0;
-    dm_wr_en    = 1'b0;
-    mem_to_reg  = 1'b0;
-    op_jal      = 1'b1; 
-    op_jr       = 1'b0; 
-    take_branch = 1'b1;
-    end
-    JR: begin
-    im_rd_en = 1'b1;
-    pc_wr_en = 1'b1;
-    op_lxb = 1'b0; 
-    op_sw  = 1'b0;
-    rf_re1 = 1'b1;
-    rf_re2 = 1'b0;
-    rf_we  = 1'b0;
-    rf_hlt = 1'b0; 
-    alu_alt_src = 1'b0;
-    dm_rd_en    = 1'b0;
-    dm_wr_en    = 1'b0;
-    mem_to_reg  = 1'b0;
-    op_jal      = 1'b0; 
-    op_jr       = 1'b1; 
-    take_branch = 1'b1;
-    end
-    HLT: begin
-    im_rd_en = 1'b0;
-    pc_wr_en = 1'b0;
-    op_lxb = 1'b0; 
-    op_sw  = 1'b0;
-    rf_re1 = 1'b0;
-    rf_re2 = 1'b0;
-    rf_we  = 1'b0;
-    rf_hlt = 1'b1; 
-    alu_alt_src = 1'b0;
-    dm_rd_en    = 1'b0;
-    dm_wr_en    = 1'b0;
-    mem_to_reg  = 1'b0;
-    op_jal      = 1'b0; 
-    op_jr       = 1'b0; 
-    take_branch = 1'b0;
-    end
-    default: begin
-    im_rd_en = 1'b1;
-    pc_wr_en = 1'b1;
-    op_lxb = 1'b0; 
-    op_sw  = 1'b0;
-    rf_re1 = 1'b0;
-    rf_re2 = 1'b0;
-    rf_we  = 1'b0;
-    rf_hlt = 1'b0; 
-    alu_alt_src = 1'b0;
-    dm_rd_en    = 1'b0;
-    dm_wr_en    = 1'b0;
-    mem_to_reg  = 1'b0;
-    op_jal      = 1'b0; 
-    op_jr       = 1'b0; 
-    take_branch = 1'b0;
-    end
-  endcase
 end
+
 endmodule
