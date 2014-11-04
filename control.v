@@ -353,14 +353,14 @@ end
 endmodule
 
 //Branch controller
-module branch_cntrl(flag, cond, take_branch_IN, take_branch_OUT);
+module branch_cntrl(flag, cond, op_jal, op_jr, take_branch_IN, take_branch_OUT);
 input [2:0] cond, flag;
-input take_branch_IN;
+input op_jal, op_jr, take_branch_IN;
 
 reg take_branch; 
 output take_branch_OUT;
 
-assign take_branch_OUT = take_branch & take_branch_IN; 
+assign take_branch_OUT = (take_branch & take_branch_IN) | op_jal | op_jr; 
 localparam NE    = 3'b000;
 localparam EQ    = 3'b001;
 localparam GT    = 3'b010;

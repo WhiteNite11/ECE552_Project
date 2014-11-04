@@ -19,7 +19,9 @@ initial begin
   //$readmemh("instr.hex",instr_mem);
   //$readmemh("instr2.hex",instr_mem);
   //$readmemh("instr3.hex",instr_mem);
-  $readmemh("instr4.hex",instr_mem);
+  //$readmemh("instr4.hex",instr_mem);
+  //$readmemh("alu_sweep.hex",instr_mem);
+  $readmemh("jumping_test.hex",instr_mem);
 end
 
 endmodule

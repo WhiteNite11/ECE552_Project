@@ -1,0 +1,29 @@
+@0000 B10F	// llb R1, 15
+@0001 BA0F	// llb R10, 15
+@0002 BA0F	// llb R10, 15
+@0003 A10F	// lhb R1, 15
+@0004 B20A	// llb R2, 10
+@0005 BA0F	// llb R10, 15
+@0006 BA0F	// llb R10, 15
+@0007 A20F	// lhb R2, 15
+@0008 B301	// llb R3, 1
+@0009 B402	// llb R4, 2
+@000a BA0F	// llb R10, 15
+@000b BA0F	// llb R10, 15
+@000c 0534	// add R5, R3, R4
+@000d BA0F	// llb R10, 15
+@000e BA0F	// llb R10, 15
+@000f 2612	// sub R6, R1, R2
+@0010 BA0F	// llb R10, 15
+@0011 BA0F	// llb R10, 15
+@0012 B70A	// llb R7, 10
+@0013 BA0F	// llb R10, 15
+@0014 BA0F	// llb R10, 15
+@0015 A70A	// lhb R7, 10
+@0016 BA0F	// llb R10, 15
+@0017 BA0F	// llb R10, 15
+@0018 9475	// sw R4, R7, 5
+@0019 BA0F	// llb R10, 15
+@001a BA0F	// llb R10, 15
+@001b 8875	// lw R8, R7, 5
+@001c F000	// hlt

@@ -71,18 +71,19 @@ module EX_MEM_pipe(clk, rst_n,
                    br_info_EX_IN, br_info_EX_OUT,
                    rf_we_EX_IN, rf_we_EX_OUT,
                    op_jal_EX_IN, op_jal_EX_OUT,
+                   op_jr_EX_IN, op_jr_EX_OUT,
                    rf_hlt_EX_IN, rf_hlt_EX_OUT,
                    wr_reg_EX_IN, wr_reg_EX_OUT);
                    
 input [15:0] alu_out_EX_IN, wrt_data_EX_IN, pp1_EX_IN, alt_pc_EX_IN;
 input [3:0] br_info_EX_IN, wr_reg_EX_IN;
 input [1:0] dm_en_EX_IN;
-input mr_EX_IN, op_jal_EX_IN, rf_we_EX_IN, rf_hlt_EX_IN, clk, rst_n;
+input mr_EX_IN, op_jal_EX_IN, op_jr_EX_IN, rf_we_EX_IN, rf_hlt_EX_IN, clk, rst_n;
 
 output[15:0] alu_out_EX_OUT, wrt_data_EX_OUT, pp1_EX_OUT, alt_pc_EX_OUT;
 output [3:0] br_info_EX_OUT, wr_reg_EX_OUT;
 output [1:0] dm_en_EX_OUT;
-output mr_EX_OUT, op_jal_EX_OUT, rf_we_EX_OUT, rf_hlt_EX_OUT;
+output mr_EX_OUT, op_jal_EX_OUT, op_jr_EX_OUT, rf_we_EX_OUT, rf_hlt_EX_OUT;
 
 
 // Pipe for alu_out.
@@ -114,6 +115,9 @@ dff rf_we_ff(.rst_n(rst_n), .clk(clk), .d(rf_we_EX_IN), .q(rf_we_EX_OUT));
 
 // Pipe for op_jal.
 dff op_jal_ff(.rst_n(rst_n), .clk(clk), .d(op_jal_EX_IN), .q(op_jal_EX_OUT));
+
+// Pipe for op_jr.
+dff op_jr_ff(.rst_n(rst_n), .clk(clk), .d(op_jr_EX_IN), .q(op_jr_EX_OUT));
 
 // Pipe for rf_hlt.
 dff rf_hlt_ff(.rst_n(rst_n), .clk(clk), .d(rf_hlt_EX_IN), .q(rf_hlt_EX_OUT));

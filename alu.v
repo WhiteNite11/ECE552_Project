@@ -35,13 +35,16 @@ module alu(opcode, rs, rt, shamt, immed, out, n, z, v);					// must implement an
 	wire [15:0] LD_output;	// Output for LLB, LHB.
 	wire [15:0] unused;
 	wire [15:0] mux0_output;
+  
+  wire [3:0] actualOpcode;
+  assign actualOpcode = ((opcode == 4'h8) || (opcode == 4'h9)) ? 4'b0000 : opcode;
 
 	// Assign flags.
 	wire doNotSetFlags;
-	assign doNotSetFlags = ((opcode == 4'b0001) || (opcode == 4'b1010) || (opcode == 4'b1011));
+	assign doNotSetFlags = ((actualOpcode == 4'b0001) || (actualOpcode == 4'b1010) || (actualOpcode == 4'b1011));
 
 	wire addOrSub;
-	assign addOrSub = ((opcode == 4'b0000) || (opcode == 4'b0010));
+	assign addOrSub = ((actualOpcode == 4'b0000) || (actualOpcode == 4'b0010));
 
 	wire addSubSaturationFlag;
 
@@ -58,13 +61,13 @@ module alu(opcode, rs, rt, shamt, immed, out, n, z, v);					// must implement an
 
 
 	// Picks between outputs for: AL, AND, NOR, SHIFTER units.
-	mux8to1_16bit mux0(.Select(opcode[2:0]), .Out(mux0_output), .A(AL_output), .B(AL_output), .C(AL_output), .D(AND_output), .E(NOR_output), .F(SHFITER_output), .G(SHFITER_output), .H(SHFITER_output));
+	mux8to1_16bit mux0(.Select(actualOpcode[2:0]), .Out(mux0_output), .A(AL_output), .B(AL_output), .C(AL_output), .D(AND_output), .E(NOR_output), .F(SHFITER_output), .G(SHFITER_output), .H(SHFITER_output));
 
 	// Picks between outputs for: mux0 and LLB/LHB.
-	mux2to1_16bit outputMux(.Select(opcode[3]), .Out(out), .A(mux0_output), .B(LD_output));
+	mux2to1_16bit outputMux(.Select(actualOpcode[3]), .Out(out), .A(mux0_output), .B(LD_output));
 
 	// Adder logic unit (does ADD, SUB, PADDSB).
-	AL_unit AL(.rd(AL_output), .rs(rs), .rt(rt), .opcodeTwoLSB(opcode[1:0]), .saturationFlag(addSubSaturationFlag));
+	AL_unit AL(.rd(AL_output), .rs(rs), .rt(rt), .opcodeTwoLSB(actualOpcode[1:0]), .saturationFlag(addSubSaturationFlag));
 
 	// Does AND.
 	and_16bit and_unit(.A(rs), .B(rt), .Out(AND_output));
@@ -73,11 +76,11 @@ module alu(opcode, rs, rt, shamt, immed, out, n, z, v);					// must implement an
 	nor_16bit nor_unit(.A(rs), .B(rt), .Out(NOR_output));
 
 	// Does SLL, SRL, SRA.
-	shifter_16bit shifter_unit(.in(rs), .mode(opcode[1:0]), .shamt(shamt), .out(SHFITER_output));
+	shifter_16bit shifter_unit(.in(rs), .mode(actualOpcode[1:0]), .shamt(shamt), .out(SHFITER_output));
 
 	// Does LLB, LHB. Assume for now that rs is the one that is used to be
 	// written to (not rt).
-	LD_unit LD(.Rx(rs), .immed(immed), .difference_bit(opcode[0]), .new_Rx(LD_output));
+	LD_unit LD(.Rx(rs), .immed(immed), .difference_bit(actualOpcode[0]), .new_Rx(LD_output));
 
 endmodule
 /*

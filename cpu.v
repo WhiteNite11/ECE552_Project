@@ -4,6 +4,8 @@ module cpu(clk, rst_n, hlt, pc);
 input clk, rst_n;
 output hlt;
 output [15:0] pc;
+//Reset signals
+wire reset;
 //PC wires
 wire [15:0] pc_in, pc_out;
 wire pc_wr_en;
@@ -17,7 +19,7 @@ wire op_jal, op_jal_ID, op_jal_EX_OUT, op_jal_MEM_OUT;
 wire [15:0] pc_offset_in;
 wire [15:0] pc_plus_offset_out;
 //PC branch selector wires
-wire op_jr, op_jr_ID;
+wire op_jr, op_jr_ID, op_jr_EX_OUT;
 wire take_branch, take_branch_ID, take_branch_OUT;
 wire [3:0] br_info_ID, br_info_EX_OUT;
 wire [15:0] alt_pc, alt_pc_EX_OUT;
@@ -88,7 +90,7 @@ sext_4to16 cpu_sext4(.imm(im_instr[3:0]), .out(sext4_out));
 sext_9to16 cpu_sext9(.imm(im_instr[8:0]), .out(sext9_out));
 sext_12to16 cpu_sext12(.imm(im_instr[11:0]), .out(sext12_out));
 //PIPE ID/EX
-ID_EX_pipe cpu_ID_EX_pipe(.rst_n(rst_n), .clk(clk), 
+ID_EX_pipe cpu_ID_EX_pipe(.rst_n(~reset), .clk(clk), 
                   .im_instr_ID_IN(im_instr), .im_instr_ID_OUT(im_instr_ID_OUT),
                   .pc_plus1_IN(pc_plus1_IF_OUT),  .pc_plus1_OUT(pc_plus1_ID_OUT), 
                   .rf_r1_IN(rf_r1_out),      .rf_r2_IN(rf_r2_out),      .rf_we_IN(rf_we), 
@@ -113,7 +115,7 @@ alu cpu_alu(.opcode(alu_op), .rs(rf_r1_out_OUT), .rt(alu_in2), .shamt(shamt), .i
             .out(alu_out), .n(n), .z(z), .v(v));
 
 // EX/MEM pipe.
-EX_MEM_pipe cp_EX_MEM_pipe(.clk(clk), .rst_n(rst_n),
+EX_MEM_pipe cp_EX_MEM_pipe(.clk(clk), .rst_n(~reset),
                    .alu_out_EX_IN(alu_out), .alu_out_EX_OUT(alu_out_EX_OUT),
                    .wrt_data_EX_IN(rf_r2_out_OUT), .wrt_data_EX_OUT(wrt_data_EX_OUT),
                    .pp1_EX_IN(pc_plus1_ID_OUT), .pp1_EX_OUT(pp1_EX_OUT),
@@ -123,12 +125,14 @@ EX_MEM_pipe cp_EX_MEM_pipe(.clk(clk), .rst_n(rst_n),
                    .br_info_EX_IN(br_info_ID), .br_info_EX_OUT(br_info_EX_OUT),
                    .rf_we_EX_IN(rf_we_ID), .rf_we_EX_OUT(rf_we_EX_OUT),
                    .op_jal_EX_IN(op_jal_ID), .op_jal_EX_OUT(op_jal_EX_OUT),
+                   .op_jr_EX_IN(op_jr_ID), .op_jr_EX_OUT(op_jr_EX_OUT),
                    .rf_hlt_EX_IN(rf_hlt_ID), .rf_hlt_EX_OUT(rf_hlt_EX_OUT),
                    .wr_reg_EX_IN(im_instr_ID_OUT[11:8]), .wr_reg_EX_OUT(wr_reg_EX_OUT));
 //Flag reg
 flag_reg cpu_flag(.clk(clk),.rst_n(rst_n),.flag_wr_en(flag_wr_en),.n(n),.z(z),.v(v),.flag_out(flag));
 // Branch controller.
-branch_cntrl cpu_branch_cntrl(.flag(flag), .cond(br_info_EX_OUT[2:0]), .take_branch_IN(br_info_EX_OUT[3]), .take_branch_OUT(take_branch_OUT));                 
+branch_cntrl cpu_branch_cntrl(.flag(flag), .cond(br_info_EX_OUT[2:0]), .op_jal(op_jal_EX_OUT), .op_jr(op_jr_EX_OUT), 
+                              .take_branch_IN(br_info_EX_OUT[3]), .take_branch_OUT(take_branch_OUT));                 
 //Data Memory
 DM cpu_dm(.clk(clk), .addr(alu_out_EX_OUT), .re(dm_rd_en_EX_OUT), .we(dm_wr_en_EX_OUT), .wrt_data(wrt_data_EX_OUT), .rd_data(dm_out));
 // MEM/WB pipe
@@ -153,6 +157,9 @@ controller cpu_control(.rst_n(rst_n), .opcode(im_instr[15:12]),
                        .op_lxb(op_lxb), .op_sw(op_sw), .alu_alt_src(alu_alt_src), 
                        .dm_rd_en(dm_rd_en), .dm_wr_en(dm_wr_en), .mem_to_reg(mem_to_reg),
                        .op_jal(op_jal), .op_jr(op_jr), .take_branch(take_branch));
+
+//Flush signal
+assign reset = ~rst_n | take_branch_OUT;
 //Test purpose
 assign pc = pc_in;
 assign hlt = rf_hlt;
@@ -168,8 +175,8 @@ wire [15:0] pc;
 
 cpu uut(.clk(clk), .rst_n(rst_n), .hlt(hlt), .pc(pc));
 always @(posedge clk) begin
-  $display("clk:%b PC:%h,  pc+offset:%h alt_pc%h pc_in:%h pc+1_in:%h instr_in:%h || pc+1_out:%h instruc_out:%h || flag_en:%b alu_op:%h nzv:%b%b%b r1out:%h r2out:%h ||branch+cond%b flag:%b write_data:%h take_branch_OUT:%b rf_we:%b", 
-  clk, uut.pc_out, uut.pc_plus_offset_out, uut.alt_pc_EX_OUT, uut.pc_in, uut.pc_plus1_IF_IN, uut.im_instr_IN, uut.pc_plus1_IF_OUT, uut.im_instr, uut.cpu_flag.flag_wr_en, uut.alu_op, uut.n, uut.z, uut.v, uut.rf_r1_out_OUT, uut.rf_r2_out_OUT, uut.br_info_EX_OUT, uut.flag,uut.write_data,uut.take_branch_OUT,uut.rf_we_EX_OUT);
+  $display("clk:%b PC:%h,  pc+offset:%h alt_pc%h pc_in:%h pc+1_in:%h instr_in:%h || pc+1_out:%h instruc_out:%h || flag_en:%b alu_op:%h nzv:%b%b%b alu_in1:%h alu_in2:%h alu_out:%h ||branch+cond%b flag:%b take_branch_OUT:%b dm_out:%h || rf_we:%b write_data:%h rf_hlt:%b", 
+  uut.clk, uut.pc_out, uut.pc_plus_offset_out, uut.alt_pc_EX_OUT, uut.pc_in, uut.pc_plus1_IF_IN, uut.im_instr_IN, uut.pc_plus1_IF_OUT, uut.im_instr, uut.flag_wr_en, uut.alu_op, uut.n, uut.z, uut.v, uut.rf_r1_out_OUT, uut.alu_in2, uut.alu_out, uut.br_info_EX_OUT, uut.flag, uut.take_branch_OUT, uut.dm_out, uut.rf_we_MEM_OUT, uut.write_data, uut.rf_hlt_MEM_OUT);
 end
 
 initial begin
@@ -186,7 +193,7 @@ always
   #1 clk = ~clk;
 initial begin
 //clk = 1'b1;
-#50;
+#100;
 $stop;
 end
 endmodule
