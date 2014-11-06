@@ -22,7 +22,7 @@ output [15:0] out;
 
 assign out = {{4{imm[11]}}, imm};
 endmodule
-
+/*
 module t_sext_4to16();
 reg [3:0] imm;
 wire [15:0] out;
@@ -40,3 +40,4 @@ imm = 4'b0000;
 imm = 4'b1111;
 end
 endmodule
+*/

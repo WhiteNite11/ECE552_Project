@@ -22,16 +22,18 @@ module ID_EX_pipe(rst_n, clk, im_instr_ID_IN, im_instr_ID_OUT,
                   op_jal_IN, op_jr_IN, take_branch_IN, op_jal_OUT, op_jr_OUT, take_branch_OUT, 
                   flag_wr_en_IN, flag_wr_en_OUT,
                   rf_hlt_IN, rf_hlt_OUT,
-                  br_info_ID_IN, br_info_ID_OUT);
+                  br_info_ID_IN, br_info_ID_OUT,
+                  rs_ID_IN, rs_ID_OUT,
+                  rt_ID_IN, rt_ID_OUT);
 
 input rst_n, clk, flag_wr_en_IN, rf_hlt_IN;
-input [3:0] br_info_ID_IN;
+input [3:0] br_info_ID_IN, rs_ID_IN, rt_ID_IN;
 input [15:0] im_instr_ID_IN;
 input [15:0] pc_plus1_IN, rf_r1_IN, rf_r2_IN, sext4_IN, sext9_IN, sext12_IN;
 input rf_we_IN, alu_alt_src_IN, dm_rd_en_IN, dm_wr_en_IN, mem_to_reg_IN, op_jal_IN, op_jr_IN, take_branch_IN;
 
 output flag_wr_en_OUT, rf_hlt_OUT;
-output [3:0] br_info_ID_OUT;
+output [3:0] br_info_ID_OUT, rs_ID_OUT, rt_ID_OUT;
 output [15:0] im_instr_ID_OUT;
 output [15:0] pc_plus1_OUT, rf_r1_OUT, rf_r2_OUT, sext4_OUT, sext9_OUT, sext12_OUT;
 output rf_we_OUT, alu_alt_src_OUT, dm_rd_en_OUT, dm_wr_en_OUT, mem_to_reg_OUT, op_jal_OUT, op_jr_OUT, take_branch_OUT;
@@ -57,6 +59,10 @@ dff flag_ff(.clk(clk), .d(flag_wr_en_IN), .rst_n(rst_n), .q(flag_wr_en_OUT));
 dff hlt_ff(.clk(clk), .d(rf_hlt_IN), .rst_n(rst_n), .q(rf_hlt_OUT));
 //Pipe block for cond and take_branch
 dff4 cond_ff(.clk(clk), .d(br_info_ID_IN), .rst_n(rst_n), .q(br_info_ID_OUT));
+//Pipe block for Rs number
+dff4 rs_ff(.clk(clk), .d(rs_ID_IN), .rst_n(rst_n), .q(rs_ID_OUT));
+//Pipe block for Rt number
+dff4 rt_ff(.clk(clk), .d(rt_ID_IN), .rst_n(rst_n), .q(rt_ID_OUT));
 
 endmodule
 

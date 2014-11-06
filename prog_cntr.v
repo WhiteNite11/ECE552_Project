@@ -2,10 +2,10 @@
 //of clk, an enable signal is used for data hazards, when
 //it is zero don't update PC. PC is reset to 0.
 
-module PC(clk,rst_n,pc_wr_en,pc_in,pc_out);
+module PC(clk,rst_n,pc_wr_en,take_branch, pc_in,pc_out);
 
 input clk, rst_n;
-input pc_wr_en;			// asserted when PC update is requested
+input pc_wr_en, take_branch;			// asserted when PC update is requested
 input [15:0] pc_in;
 
 output reg [15:0] pc_out;	//output PC
@@ -16,12 +16,12 @@ output reg [15:0] pc_out;	//output PC
 always @(negedge clk, negedge rst_n)
   if (~rst_n)
     pc_out <= 16'h0000;
-  else if (pc_wr_en)
+  else if (pc_wr_en | take_branch)
     pc_out <= pc_in;
   else
     pc_out <= pc_out;
 endmodule
-
+/*
 module t_PC();
 reg [15:0] pc_in;
 wire [15:0] pc_out;
@@ -55,3 +55,4 @@ always clk = #5 ~clk;
 always pc_in = #10 (pc_in + 16'd4);
 
 endmodule
+*/

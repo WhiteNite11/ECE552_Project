@@ -447,3 +447,79 @@ case(cond) // flag[2]=n, flag[1]=z, flag[0]=v,
 end
 
 endmodule
+
+module forward_controller(rs_ID_EX, rt_ID_EX, 
+                          rd_EX_MEM, rd_MEM_WB, 
+                          rf_we_EX_MEM, rf_we_MEM_WB, dm_we_ID_EX, dm_rd_en_EX_MEM, 
+                          forward_rs, forward_rt, forward_wrt_data);
+input [3:0] rs_ID_EX, rt_ID_EX, rd_EX_MEM, rd_MEM_WB;
+input rf_we_EX_MEM, rf_we_MEM_WB, dm_we_ID_EX, dm_rd_en_EX_MEM;
+output reg [1:0] forward_rs, forward_rt, forward_wrt_data;
+
+always @(rs_ID_EX, rt_ID_EX, rd_EX_MEM, rd_MEM_WB, rf_we_EX_MEM, rf_we_MEM_WB, 
+         dm_we_ID_EX, dm_rd_en_EX_MEM) begin
+  //Check to forward data from EX/MEM and MEM/WB to Rs input on alu
+  if((rs_ID_EX == rd_EX_MEM) &&  (rd_EX_MEM != 4'h0) && (rf_we_EX_MEM == 1'b1)) begin
+    forward_rs = 2'b01;
+  end
+  else if((rs_ID_EX == rd_MEM_WB) &&  (rd_MEM_WB != 4'h0) && (rf_we_MEM_WB == 1'b1)) begin
+    forward_rs = 2'b10;
+  end
+  else begin
+    forward_rs = 2'b00;
+  end
+  //Check to forward data from EX/MEM and MEM/WB to Rt input on alu
+  if((rt_ID_EX == rd_EX_MEM) &&  (rd_EX_MEM != 4'h0) && (rf_we_EX_MEM == 1'b1) && (dm_we_ID_EX == 1'b0)) begin
+    forward_rt = 2'b01;
+  end
+  else if ((rt_ID_EX == rd_MEM_WB) &&  (rd_MEM_WB != 4'h0) && (rf_we_MEM_WB == 1'b1) && (dm_we_ID_EX == 1'b0) && (dm_rd_en_EX_MEM == 1'b0)) begin
+    forward_rt = 2'b10;
+  end
+  else begin
+    forward_rt = 2'b00;
+  end
+  //Check to forward data from EX/MEM and MEM/WB to write_data input EX/MEM pipe
+  if((rt_ID_EX == rd_EX_MEM) &&  (rd_EX_MEM != 4'h0) && (dm_we_ID_EX == 1'b1)) begin
+    forward_wrt_data = 2'b01;
+  end
+  else if ((rt_ID_EX == rd_MEM_WB) &&  (rd_MEM_WB != 4'h0) && (dm_we_ID_EX == 1'b1)) begin
+    forward_wrt_data = 2'b10;
+  end
+  else begin
+    forward_wrt_data = 2'b00;
+  end
+end
+
+endmodule
+
+module stall_controller(lw_rd_ID_EX, dm_rd_en_ID_EX, instr, stall);
+input [3:0] lw_rd_ID_EX;
+input dm_rd_en_ID_EX;
+input [15:0] instr;
+output reg stall;
+
+always @(lw_rd_ID_EX, dm_rd_en_ID_EX, instr) begin
+  //First check if it is a lw instruction before hazard check
+  if (dm_rd_en_ID_EX) begin
+    //Check if lw_rd is same as rs of the instruction
+    if((lw_rd_ID_EX == instr[7:4] && instr[15] == 1'b0)  //Rs of ALU ops 
+    || (lw_rd_ID_EX == instr[7:4] && instr[15:13] == 3'b100)  //Rs of lw/sw ops 
+    || (lw_rd_ID_EX == instr[11:8] && instr[15:12] == 4'b1010) //Rs of LHB op
+    || (lw_rd_ID_EX == instr[7:4] && instr[15:12] == 4'b1110)) begin  //Rs JR op
+      stall = 1'b1; 
+    end 
+    //Check  if lw_rd is same as rt of instruction
+    else if((lw_rd_ID_EX == instr[3:0] && instr[15:14] == 2'b00)  //Rt of ALU ops not shifts or NOR
+         || (lw_rd_ID_EX == instr[3:0] && instr[15:12] == 4'b0100)  //Rt of NOR
+         || (lw_rd_ID_EX == instr[11:8] && instr[15:12] == 4'b1001)) begin  //Rt of SW
+      stall = 1'b1;   
+    end
+  end
+  //Not a lw instruction no stall
+  else begin
+    stall = 1'b0;
+  end
+end
+
+endmodule 
+

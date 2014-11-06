@@ -21,7 +21,13 @@ initial begin
   //$readmemh("instr3.hex",instr_mem);
   //$readmemh("instr4.hex",instr_mem);
   //$readmemh("alu_sweep.hex",instr_mem);
-  $readmemh("jumping_test.hex",instr_mem);
+  //$readmemh("jumping_test.hex",instr_mem);
+  //$readmemh("data_hzrd_test.hex",instr_mem);
+  //$readmemh("ls_hzrd.hex",instr_mem);
+  //$readmemh("lw_hzrd.hex",instr_mem);
+  //$readmemh("jump_hzrd.hex",instr_mem);
+  //$readmemh("data_hazard_lw.hex",instr_mem);
+  $readmemh("t2.hex",instr_mem);
 end
 
 endmodule

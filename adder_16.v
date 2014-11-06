@@ -7,7 +7,7 @@ output [15:0] out;
 assign out = in1 + in2;
 
 endmodule
-
+/*
 module t_adder_16();
 reg [15:0] in1, in2;
 wire [15:0] out;
@@ -21,4 +21,4 @@ initial begin
   end
 end
 endmodule
-
+*/
